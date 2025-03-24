@@ -40,7 +40,12 @@ def _(END_DATE, START_DATE, json, pd):
 
 
 @app.cell
-def _(END_DATE, START_DATE, pd):
+def _():
+    # SPX data from NASDAQ
+    # https://www.nasdaq.com/market-activity/index/spx/historical
+    # Fetch the dataset and remove quotes to play with SPX as a regressand
+
+    """
     spx_df = pd.read_csv("./data/HistoricalData_1741932948522.csv")
     spx_df.drop(columns=['Open', 'High', 'Low'], inplace=True)
 
@@ -52,7 +57,8 @@ def _(END_DATE, START_DATE, pd):
     spx_df.set_index("Date", inplace=True)
 
     spx_df['30MA'].plot(title="SPX 30-day moving average")
-    return (spx_df,)
+    """
+    return
 
 
 @app.cell
@@ -71,8 +77,8 @@ def _(END_DATE, START_DATE, pd):
 
 
 @app.cell
-def _(bonded_series, btc_df, issuance_series, spx_df):
-    market_df = spx_df
+def _(bonded_series, btc_df, issuance_series, pd):
+    market_df = pd.DataFrame(index=btc_df.index)
     market_df['bonded'] = bonded_series
     market_df['issuance'] = issuance_series
     market_df['btc'] = btc_df['30MA']
@@ -96,14 +102,12 @@ def _(bonded_series, issuance_series, plt):
 
 @app.cell
 def _(market_df, plt):
-    plt.scatter(market_df['bonded'], market_df["30MA"])
+    plt.scatter(market_df['bonded'], market_df["btc"])
     return
 
 
 @app.cell
 def _(market_df, np, pd):
-    #regression = scipy.stats.linregress(market_df[["Close/Last","issuance"]].values.T, market_df["bonded"])
-
     import statsmodels.api as sm
 
     def normalize(s):
@@ -117,8 +121,7 @@ def _(market_df, np, pd):
         }, index=market_df.index)
     Y = normalize(np.log(market_df['bonded']))
 
-    # Add a constant for the intercept
-    # Don't need to because we normalized
+    # No constant needed because data is centred
     #X = sm.add_constant(X)
 
     # Fit the model
